@@ -41,7 +41,30 @@ def get_user_id(id):
    user = mongo.db.users.find_one({'_id': ObjectId(id)})
    response = json_util.dumps(user)
    return Response(response, mimetype='application/json')
-    
+
+@app.route('/users/<id>', methods=['DELETE'])
+def delete_user(id):
+    mongo.db.users.delete_one({'_id':ObjectId(id)})
+    response = jsonify({'message': 'User ' + id + ' have been deleted succesfully'})
+    return response
+
+@app.route('/users/<id>', methods=['PUT'])
+def update_user(id):
+    username = request.json['username']
+    email = request.json['email']
+    password= request.json['password']
+
+    if username and password and email:
+        hashed_pass = generate_password_hash(password)
+        mongo.db.users.update_one({'_id': ObjectId(id)}, {'$set':{
+            'username':username,
+            'password': hashed_pass,
+            'email': email
+        }})
+    response = jsonify({'message': 'User ' + id + ' have been updated succesfully'})
+    return response
+
+
 
 @app.errorhandler(404)
 def not_found(error=None):
@@ -51,6 +74,7 @@ def not_found(error=None):
     })   
     response.status_code = 404
     return response 
+
 
 
 if __name__ == "__main__":
